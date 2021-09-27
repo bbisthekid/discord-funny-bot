@@ -133,6 +133,14 @@ async def getquote(ctx, message: str):
 
     db.commit()
 
+
+# join and say a peter quote in voice then leave
+@client.command()
+async def peter(ctx):
+    channel = ctx.author.voice.channel
+    await channel.connect()
+
+
 # # hardly know her function
 # @client.event
 # async def on_message(message):
@@ -153,9 +161,15 @@ async def hardly_know_her(message):
     # check if the bot sent the message to avoid an infinite loop
     if message.author == client.user:
         return
+    # check if message is balls
+    if re.search('balls', message.content.lower()):
+        await message.channel.send("haha")
     # check within the predetermined patterns array for word that end in er
     for pattern in patterns:
         if re.search(pattern, message.content):
+            if re.findall(rf'\b{re.escape(pattern)}\b', message.content, re.MULTILINE):
+                await message.channel.send("Hardly know 'er.")
+                break
             response = re.findall(rf'\b\w+{re.escape(pattern)}\b', message.content, re.MULTILINE)
             new_response = response[0].lower().capitalize()
             await message.channel.send(new_response + "? I hardly know 'er.")
