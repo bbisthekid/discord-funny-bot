@@ -8,8 +8,6 @@ import datetime
 
 DISCORD_TOKEN = config('TOKEN')
 
-patterns = ['er', 'eR', 'Er', 'ER']
-
 client = commands.Bot(command_prefix='!!')
 
 # check if database is made and load it
@@ -27,7 +25,7 @@ async def on_ready():
     print('Connected to discord as {0.user}'.format(client))
 
 
-# commands #
+# -------commands---------- #
 
 # test command
 @client.command()
@@ -138,9 +136,9 @@ async def getquote(ctx, message: str):
 @client.command()
 async def peterquote(ctx):
     voice_channel = ctx.author.voice.channel
-    channel = None
+    # channel = None
     if voice_channel is not None:
-        channel = voice_channel.name
+        # channel = voice_channel.name
         vc = await voice_channel.connect()
         vc.play(discord.FFmpegPCMAudio(executable="C:/FFmpeg/ffmpeg.exe", source="sounds/peter-hurt.mp3"))
         # sleep while the audio is playing():
@@ -159,22 +157,24 @@ async def hardly_know_her(message):
     # check if the bot sent the message to avoid an infinite loop
     if message.author == client.user:
         return
+    # check within the predetermined patterns array for word that end in er
+    if re.search('er', message.content.lower()):
+        if re.findall(rf'\ber\b', message.content, re.MULTILINE):
+            await message.channel.send("Hardly know 'er.")
+            return
+        response = re.findall(rf'\b\w+er\b', message.content, re.MULTILINE)
+        if response:
+            new_response = response[0].lower().capitalize()
+            await message.channel.send(new_response + "? I hardly know 'er.")
+            return
     # check if message is balls
     if re.search('balls', message.content.lower()):
         await message.channel.send("haha")
+        return
     # check if message is mike
     if re.search('mike', message.content.lower()):
         await message.channel.send("Mike Balls gotten")
-    # check within the predetermined patterns array for word that end in er
-    for pattern in patterns:
-        if re.search(pattern, message.content):
-            if re.findall(rf'\b{re.escape(pattern)}\b', message.content, re.MULTILINE):
-                await message.channel.send("Hardly know 'er.")
-                break
-            response = re.findall(rf'\b\w+{re.escape(pattern)}\b', message.content, re.MULTILINE)
-            if response:
-                new_response = response[0].lower().capitalize()
-                await message.channel.send(new_response + "? I hardly know 'er.")
+        return
 
 
 client.run(DISCORD_TOKEN)
