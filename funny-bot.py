@@ -3,7 +3,7 @@ from discord.ext import commands
 from decouple import config
 import re
 import sqlite3
-import hashlib
+import time
 import datetime
 
 DISCORD_TOKEN = config('TOKEN')
@@ -83,8 +83,8 @@ async def quote(ctx, *, message: str):
     uniqeuid = hash(user+message)
 
     # date and time of the message
-    time = datetime.datetime.now()
-    formatted_time = str(time.strftime("%d-%m-%Y %H:%M"))
+    message_time = datetime.datetime.now()
+    formatted_time = str(message_time.strftime("%d-%m-%Y %H:%M"))
 
     # find if message is in the db already
     cursor.execute("SELECT count(*) FROM quotes WHERE id = ?", (uniqeuid,))
@@ -136,23 +136,21 @@ async def getquote(ctx, message: str):
 
 # join and say a peter quote in voice then leave
 @client.command()
-async def peter(ctx):
-    channel = ctx.author.voice.channel
-    await channel.connect()
-
-
-# # hardly know her function
-# @client.event
-# async def on_message(message):
-#     # check if the bot sent the message to avoid an infinite loop
-#     if message.author == client.user:
-#         return
-#     # check within the predetermined patterns array for word that end in er
-#     for pattern in patterns:
-#         if re.search(pattern, message.content):
-#             response = re.findall(rf'\b\w+{re.escape(pattern)}\b', message.content, re.MULTILINE)
-#             new_response = response[0].lower().capitalize()
-#             await message.channel.send(new_response + "? I hardly know 'er.")
+async def peterquote(ctx):
+    voice_channel = ctx.author.voice.channel
+    channel = None
+    if voice_channel is not None:
+        channel = voice_channel.name
+        vc = await voice_channel.connect()
+        vc.play(discord.FFmpegPCMAudio(executable="C:/FFmpeg/ffmpeg.exe", source="sounds/peter-hurt.mp3"))
+        # sleep while the audio is playing():
+        while vc.is_playing():
+            time.sleep(1)
+        await vc.disconnect()
+    else:
+        await ctx.send(str(ctx.author.name) + "is not in a channel.")
+    # delete the command after the audio is done playing
+    # await ctx.message.delete()
 
 
 # hardly know her function
@@ -164,6 +162,9 @@ async def hardly_know_her(message):
     # check if message is balls
     if re.search('balls', message.content.lower()):
         await message.channel.send("haha")
+    # check if message is mike
+    if re.search('mike', message.content.lower()):
+        await message.channel.send("Mike Balls gotten")
     # check within the predetermined patterns array for word that end in er
     for pattern in patterns:
         if re.search(pattern, message.content):
@@ -171,8 +172,9 @@ async def hardly_know_her(message):
                 await message.channel.send("Hardly know 'er.")
                 break
             response = re.findall(rf'\b\w+{re.escape(pattern)}\b', message.content, re.MULTILINE)
-            new_response = response[0].lower().capitalize()
-            await message.channel.send(new_response + "? I hardly know 'er.")
+            if response:
+                new_response = response[0].lower().capitalize()
+                await message.channel.send(new_response + "? I hardly know 'er.")
 
 
 client.run(DISCORD_TOKEN)
