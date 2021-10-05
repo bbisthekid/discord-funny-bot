@@ -61,22 +61,33 @@ async def random(ctx):
 
 # create a quote
 @client.command()
-async def quote(ctx, *, message: str):
+async def quote(ctx, user: str, message: str):
 
-    # split the message into words
-    string = str(message)
-    temp = string.split()
+    # # split the message into words
+    # string = str(message)
+    # temp = string.split()
 
-    # take the username out
-    user = temp[0]
-    del temp[0]
+    # # take the username out
+    # user = temp[0]
+    # del temp[0]
 
-    # join the message back together
-    text = " ".join(temp)
+    # # join the message back together
+    # # text = " ".join(temp)
 
-    if user[0] != '@':
+    if not message:
         await ctx.send("Use ```@[user] [message]``` to quote a person")
         return
+
+    if not re.search('@', message):
+        await ctx.send("Use ```@[user] [message]``` to quote a person")
+        return
+
+    
+
+    user = user.replace("<","")
+    user = user.replace(">","")
+    user = user.replace("@","")
+    user = user.replace("!","")
 
     uniqeuid = hash(user+message)
 
@@ -92,7 +103,7 @@ async def quote(ctx, *, message: str):
         return
 
     # insert into database
-    cursor.execute("INSERT INTO quotes VALUES(?,?,?,?)", (uniqeuid, user, text, formatted_time))
+    cursor.execute("INSERT INTO quotes VALUES(?,?,?,?)", (uniqeuid, user, message, formatted_time))
     await ctx.send("Quote successfully added")
 
     db.commit()
@@ -101,17 +112,30 @@ async def quote(ctx, *, message: str):
     rows = cursor.execute("SELECT * from quotes")
 
     # log to terminal
-    print(str(len(rows.fetchall()))+". added - "+str(user)+": \""+str(text)+"\" to database at "+formatted_time)
+    print(str(len(rows.fetchall()))+". added - "+str(user)+": \""+str(message)+"\" to database at "+formatted_time)
 
 
 @client.command()
 async def getquote(ctx, message: str):
+    if not re.search('@', message):
+        await ctx.send("Use ```@[user] [message]``` to quote a person")
+        return
 
-    # sanitize name
-    user = (message,)
+    user = message
+    message = message.replace("<","")
+    message = message.replace(">","")
+    message = message.replace("@","")
+    message = message.replace("!","")
+    print(message)
+
+    # # sanitize name
+    # user = (message,)
 
     try:
-        cursor.execute("SELECT quoteMessage,date FROM quotes WHERE user=(?) ORDER BY RANDOM() LIMIT 1", user)
+        sql = "SELECT quoteMessage, date FROM quotes WHERE user =" + "'" + message + "'" + " ORDER BY RANDOM() LIMIT 1"
+        print(sql)
+        # cursor.execute("SELECT quoteMessage,date FROM quotes WHERE user=(?) ORDER BY RANDOM() LIMIT 1", message)
+        cursor.execute(sql)
         query = cursor.fetchone()
 
         # adds quotes to message
@@ -121,7 +145,7 @@ async def getquote(ctx, message: str):
         print(message+": \""+output+"\" printed to the screen "+str(query[1]))
 
         # embeds the output to make it pretty
-        style = discord.Embed(name="responding quote", description="- "+message+" "+str(query[1]))
+        style = discord.Embed(name="responding quote", description="- "+user+" "+str(query[1]))
         style.set_author(name=output)
         await ctx.send(embed=style)
 
@@ -157,7 +181,12 @@ async def hardly_know_her(message):
     # check if the bot sent the message to avoid an infinite loop
     if message.author == client.user:
         return
-    # check within the predetermined patterns array for word that end in er
+    # check if the message is a spoiler text
+    # spoiler_text = re.findall(rf'\b||\w+||\b', message.content, re.MULTILINE)
+    if re.search(re.escape("||"), message.content) is not None:
+        return
+    # check for word that end in er
+    # print(message.content)
     if re.search('er', message.content.lower()):
         if re.findall(rf'\ber\b', message.content, re.MULTILINE):
             await message.channel.send("Hardly know 'er.")
