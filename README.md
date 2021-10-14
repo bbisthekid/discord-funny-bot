@@ -1,4 +1,5 @@
 # discord-funny-bot
+Just a fun bot I've been working on for a discord server with my friends to help me learn python and APIs.
 
 # Project Setup
 
