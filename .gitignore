@@ -1,8 +1,8 @@
 .DS_Store
 .idea
 .vscode
-.sqlite
-.mp3
+*.sqlite
+*.mp3
 dump.rdb
 
 # Log files
